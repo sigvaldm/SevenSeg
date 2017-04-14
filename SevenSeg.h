@@ -1,7 +1,7 @@
 /*
-  SevenSeg v.1.0
+  SevenSeg v1.1
   SevenSeg.h - Library for controlling a 7-segment LCD
-  Created by Sigvald Marholm, June 2nd, 2013.
+  Created by Sigvald Marholm, 02.06.2015.
 */
 
 #ifndef SevenSeg_h
@@ -45,12 +45,14 @@ class SevenSeg
     void setDutyCycle(int);
 
     // High level functions for printing to display
-    void writeDisplay(int,int,int,int,int);
-    void writeDisplay(char *str);
+    void write(long int);
     void write(int);
-    void write(int,int);
+    void write(long int,int);
+    void write(int, int);
     void write(char*);
-    void writeFloat(float);
+    void write(String);
+    void write(double);
+    void write(double num, int point);
     void writeClock(int,int,char);
     void writeClock(int,int);
     void writeClock(int,char);
@@ -124,8 +126,8 @@ class SevenSeg
 
     void updDelay();
     void execDelay(int);	// Executes delay in microseconds
-    char iaExtractDigit(int,int);
-    int iaLimitInt(int);
+    char iaExtractDigit(long int,int);
+    long int iaLimitInt(long int);
 
     // Sets which values (HIGH or LOW) pins should have to turn on/off segments or digits.
     // This depends on whether the display is Common Anode or Common Cathode.
@@ -145,11 +147,12 @@ class SevenSeg
     long int _timerCounterOffEnd;	// How far _timerCounter should count to provide a delay approximately equal to _digitOffDelay
 
     // What is to be printed by interruptAction is determined by these variables
-    int _writeInt;		// Holds the number to be written in case of int, fixed point, or clock
+    long int _writeInt;		// Holds the number to be written in case of int, fixed point, or clock
     int _writePoint;		// Holds the number of digits to use as decimals in case of fixed point
 //    float _writeFloat;		// Holds the float to write in case of float. OBSOLETE: Float are converted to fixed point
     char *_writeStr;		// Holds a pointer to a string to write in case of string
     char _writeMode;		// 'p' for fixed point, 'i' for integer, 'f' for float, ':'/'.'/'_' for clock with according divisor symbol
+    String _writeStrObj;
 
 };
 

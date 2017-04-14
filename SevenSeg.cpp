@@ -1,7 +1,7 @@
 /*
   SevenSeg v.1.0
   SevenSeg.h - Library for controlling a 7-segment display
-  Created by Sigvald Marholm, June 2nd, 2013.
+  Created by Sigvald Marholm, 02.06.2015.
 */
 
 #include "Arduino.h"
@@ -265,11 +265,13 @@ void SevenSeg::setRefreshRate(int freq){
  * int _writeInt	- Stores the number for write(int), writeFixed() and writeClock() (convert to only one number bb for clock)
  * float _writeFloat	- Stores the float for write(float)
  * char* _writeStr	- Stores a pointer to a string to be written. This pointer must be maintained outside the class
+ * String _writeStrObj	- Stores a string object to be written.
  * char _writeMode	- Describes which writing function/mode is used:
  *				i - write(int)
  *				f - write(float)
  *				p - writeFixed()
  *				s - write(char* a)
+ *				o - write(String)
  *				: - writeClock() with colon as decimator
  *				. - writeClock() with period as decimator
  *				_ - writeClock() with no decimator
@@ -372,14 +374,18 @@ void SevenSeg::writeClock(int mm, int ss, char c){
 }
 
 void SevenSeg::write(int num,int point){
+  write((long int)num, point);
+}
+
+void SevenSeg::write(long int num,int point){
 
   if(_timerID==-1){  // No timer assigned. MUX once.
 
     // Compute the maximum positive and negative numbers possible to display
     // (TBD: Move this to a computation done on pin assignments?)
-    int maxNegNum=1;
+    long int maxNegNum=1;
     for(int i=1;i<=_numOfDigits-1;i++) maxNegNum*=10;
-    int maxPosNum=10*maxNegNum-1;
+    long int maxPosNum=10*maxNegNum-1;
     maxNegNum=-maxNegNum+1;
 
     // TBD: Change to displaying OL (overload) or ---- or similar?
@@ -400,10 +406,10 @@ void SevenSeg::write(int num,int point){
       minus=1;
     }
 
-
+/* USED IN v1.0 - DOESN'T SUPPRESS LEADING ZEROS
     for(int i=_numOfDigits-1;i>=0;i--){
       changeDigit(i);
-      int nextDigit = num % 10;
+      int nextDigit = num % 10L;
       if(minus&&i==0) writeDigit('-');
       else writeDigit(nextDigit);       // TBD: Possible future update: don't write insignificant zeroes
       if(point==i) setDP();
@@ -412,6 +418,26 @@ void SevenSeg::write(int num,int point){
       writeDigit(' ');
       clearDP();
       execDelay(_digitOffDelay);
+    }
+*/
+
+    for(int i=_numOfDigits-1;i>=0;i--){
+        changeDigit(i);
+        int nextDigit = num % 10L;
+        if(num){
+            writeDigit(nextDigit);
+        } else if(minus){
+            writeDigit('-');
+            minus=0;
+        } else {
+            writeDigit(' ');
+        }
+        if(point==i) setDP();
+        num /= 10;
+        execDelay(_digitOnDelay);
+        writeDigit(' ');
+        clearDP();
+        execDelay(_digitOffDelay);
     }
 
   } else {  // Use timer
@@ -430,26 +456,45 @@ void SevenSeg::write(int num,int point){
 }
 
 // Extracts digit number "digit" from "number" for use with ia - interruptAction
-char SevenSeg::iaExtractDigit(int number, int digit){
+char SevenSeg::iaExtractDigit(long int number, int digit){
 
+/* OLD VERSION WITHOU ZERO SUPPRESION (v1.0)
   if(number<0){
     if(digit==0) return '-';
     number*=-1;
   }
-  for(int i=0;i<_numOfDigits-digit-1;i++) number/=10;
-  return (char)((number%10)+48);
+  for(int i=0;i<_numOfDigits-digit-1;i++) number/=10L;
+  return (char)((number%10L)+48L);
+*/
+
+  int minus = 0;
+  if(number<0){
+    number*=-1;
+    minus = 1;
+  }
+  long int prev_number = number;
+
+  if(digit!=_numOfDigits-1){
+    for(int i=0;i<_numOfDigits-digit-1-1;i++) prev_number/=10L;
+    number = prev_number/10;
+  }
+
+  if(number==0){
+    if(prev_number!=0 && minus) return '-';
+    else return ' ';
+  } else return (char)((number%10L)+48L);
 
 }
 
 // Limits integer similar to how it's done in write(int,int)
-int SevenSeg::iaLimitInt(int number){
+long int SevenSeg::iaLimitInt(long int number){
 
 
     // Compute the maximum positive and negative numbers possible to display
     // (TBD: Move this to a computation done on pin assignments?)
-    int maxNegNum=1;
+    long int maxNegNum=1;
     for(int i=1;i<=_numOfDigits-1;i++) maxNegNum*=10;
-    int maxPosNum=10*maxNegNum-1;
+    long int maxPosNum=10*maxNegNum-1;
     maxNegNum=-maxNegNum+1;
 
     // TBD: Change to displaying OL (overload) or ---- or similar?
@@ -461,6 +506,10 @@ int SevenSeg::iaLimitInt(int number){
 }
 
 void SevenSeg::write(int num){
+  write((long int)num);
+}
+
+void SevenSeg::write(long int num){
 
   if(_timerID==-1){  // No timer assigned. MUX once.
 
@@ -526,7 +575,6 @@ void SevenSeg::write(char *str){
     }
 
   } else {  // Use timer
-
 	_writeMode = 's';	// Tell interruptAction that write(char*) is used.
 	_writeStr = str;	// Tell interruptAction to write this string
   }
@@ -534,13 +582,53 @@ void SevenSeg::write(char *str){
 
 }
 
-void SevenSeg::writeFloat(float num){
+void SevenSeg::write(String str){
+
+  if(_timerID==-1){  // No timer assigned. MUX once.
+
+    int i=0;
+    int j=0;
+    clearColon();
+    while(i<str.length()){
+      changeDigit(j);
+      writeDigit(str[i]);
+      if(str[i+1]=='.'){
+        setDP();
+        i++;
+      }
+      execDelay(_digitOnDelay);
+      writeDigit(' ');
+      clearDP();
+      execDelay(_digitOffDelay);
+      i++;
+      j++;
+    }
+
+  } else {  // Use timer
+
+	_writeMode = 'o';	// Tell interruptAction that write(String) is used.
+	_writeStrObj = str;	// Tell interruptAction to write this string
+  }
+
+
+}
+
+void SevenSeg::write(double num, int point){
+    for(int i=0;i<point;i++) num*=10;
+    long int intNum = (long int) num;
+    double remainder = num - intNum;
+    if(remainder>=0.5 && num>0) intNum++;
+    if(remainder<=0.5 && num<0) intNum--;
+    write(intNum,point);
+}
+
+void SevenSeg::write(double num){
 
     // Compute the maximum positive and negative numbers possible to display
     // (TBD: Move this to a computation done on pin assignments?)
-    int maxNegNum=1;
+    long int maxNegNum=1;
     for(int i=1;i<=_numOfDigits-1;i++) maxNegNum*=10;
-    int maxPosNum=10*maxNegNum-1;
+    long int maxPosNum=10*maxNegNum-1;
     maxNegNum=-maxNegNum+1;
 
     if(num>maxPosNum) num=maxPosNum;
@@ -568,15 +656,15 @@ void SevenSeg::writeFloat(float num){
     }
 
     // Implementing correct round-off
-    float rest=num;
+    double rest=num;
     if(rest<0) rest*=-1;
-    rest=rest-(int)rest;
+    rest=rest-(long int)rest;
     if(rest>=0.5&&num>0) num++;
     if(rest>=0.5&&num<0) num--;
 
     if(_timerID==-1){
 
-      write((int)num,point);
+      write((long int)num,point);
 
     } else { // user timer
 
@@ -585,7 +673,7 @@ void SevenSeg::writeFloat(float num){
 
       _writeMode='f';
       _writePoint=-point;
-      _writeInt=(int)num;
+      _writeInt=(long int)num;
 
     }
 }
@@ -689,6 +777,24 @@ void SevenSeg::interruptAction(){
       }      
       writeDigit(_writeStr[i]);
       if(_writeStr[i+1]=='.') setDP();     
+
+    }
+
+    if(_writeMode=='o'){
+
+      // This algorithm must count to the correct letter i in _writeStr for digit j, since the two may be unmatched
+      // and it is impossible to know which letter to write without counting
+      int i=0; // which digit
+      int j=0; // which digit have it counted to
+      while(i<_writeStrObj.length() && j<_timerDigit){
+        if(_writeStrObj[i+1]=='.'){
+          i++;
+        }
+        i++;
+        j++;
+      }      
+      writeDigit(_writeStrObj[i]);
+      if(_writeStrObj[i+1]=='.') setDP();     
 
     }
 

@@ -1,0 +1,61 @@
+#######################################
+# SevenSeg v1.1
+# keywords.txt - Syntax Coloring Map
+# Sascha Bruechert, 05.02.2015
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+SevenSeg	KEYWORD1
+
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+digitPins	KEYWORD2
+numOfDigits	KEYWORD2
+
+## Low level functions for initializing hardware
+setCommonAnode	KEYWORD2
+setCommonCathode	KEYWORD2
+setDigitPins	KEYWORD2
+setActivePinState	KEYWORD2
+setDPPin	KEYWORD2
+setColonPin	KEYWORD2
+setSymbPins	KEYWORD2
+
+## Low level functions for printing to display
+clearDisp	KEYWORD2
+changeDigit	KEYWORD2
+writeDigit	KEYWORD2
+setDP	KEYWORD2
+clearDP	KEYWORD2
+setColon	KEYWORD2
+clearColon	KEYWORD2
+setApos	KEYWORD2
+clearApos	KEYWORD2
+
+## Low level functions for controlling multiplexing
+setDigitDelay	KEYWORD2
+setRefreshRate	KEYWORD2
+setDutyCycle	KEYWORD2
+
+## High level functions for printing to display
+write	KEYWORD2
+writeClock	KEYWORD2
+
+## Timer control functions
+setTimer	KEYWORD2
+clearTimer	KEYWORD2
+startTimer	KEYWORD2
+stopTimer	KEYWORD2
+interruptAction	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+#######################################
+# Constants (LITERAL1)
+#######################################
