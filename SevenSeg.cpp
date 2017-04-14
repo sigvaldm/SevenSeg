@@ -424,7 +424,7 @@ void SevenSeg::write(long int num,int point){
     for(int i=_numOfDigits-1;i>=0;i--){
         changeDigit(i);
         int nextDigit = num % 10L;
-        if(num){
+        if(num || i>point-1 || i==_numOfDigits-1){
             writeDigit(nextDigit);
         } else if(minus){
             writeDigit('-');
@@ -456,7 +456,7 @@ void SevenSeg::write(long int num,int point){
 }
 
 // Extracts digit number "digit" from "number" for use with ia - interruptAction
-char SevenSeg::iaExtractDigit(long int number, int digit){
+char SevenSeg::iaExtractDigit(long int number, int digit, int point){
 
 /* OLD VERSION WITHOU ZERO SUPPRESION (v1.0)
   if(number<0){
@@ -467,22 +467,32 @@ char SevenSeg::iaExtractDigit(long int number, int digit){
   return (char)((number%10L)+48L);
 */
 
+  long int old_number = number;
   int minus = 0;
   if(number<0){
     number*=-1;
     minus = 1;
   }
-  long int prev_number = number;
 
   if(digit!=_numOfDigits-1){
-    for(int i=0;i<_numOfDigits-digit-1-1;i++) prev_number/=10L;
-    number = prev_number/10;
+    for(int i=0;i<_numOfDigits-digit-1;i++) number/=10L;
   }
 
-  if(number==0){
-    if(prev_number!=0 && minus) return '-';
+  if(digit>point-1 || digit==_numOfDigits-1 || number!=0) return (char)((number%10L)+48L);
+  else {
+    if(iaExtractDigit(old_number,digit+1,point)!='-' && iaExtractDigit(old_number,digit+1,point)!=' ' && minus) return '-';
     else return ' ';
-  } else return (char)((number%10L)+48L);
+  }
+
+//  else if(iaExtractDigit(old_number,digit+1,point)=='-' && minus) return '-';
+//  else if(iaExtractDigit(old_number,digit+1,point)!=' ' && iaExtractDigit(old_number,digit+1,point)!='-' && minus) return '-';
+//  else ' ';
+/*
+  else if(iaExtractDigit(number,digit+1,point)=='0'){
+    if(minus) return '-';
+    else return ' ';
+  } else return ' ';
+  */
 
 }
 
@@ -739,12 +749,12 @@ void SevenSeg::interruptAction(){
 //    writeDigit(_timerDigit);
 
     if(_writeMode=='p'||_writeMode=='f'){	// Fixed point writing (or float)
-      writeDigit(iaExtractDigit(_writeInt,_timerDigit));
+      writeDigit(iaExtractDigit(_writeInt,_timerDigit,_writePoint));
       if(_writePoint==_timerDigit) setDP();
     }
 
     if(_writeMode=='i'){	// Fixed point writing
-      writeDigit(iaExtractDigit(_writeInt,_timerDigit));
+      writeDigit(iaExtractDigit(_writeInt,_timerDigit,_numOfDigits));
     }
 
     if(_writeMode==':'||_writeMode=='.'||_writeMode=='_'){
@@ -755,7 +765,7 @@ void SevenSeg::interruptAction(){
       if(_timerDigit==_numOfDigits){	// Symbol digit
         setColon();
       } else {
-        writeDigit(iaExtractDigit(_writeInt,_timerDigit));
+        writeDigit(iaExtractDigit(_writeInt,_timerDigit,_numOfDigits));
         if(_writeMode==':' && !symbColon) setColon();
         if((_writeMode=='.')&&(_timerDigit==_numOfDigits-3)) setDP();  // Only set "." in the right place
       }

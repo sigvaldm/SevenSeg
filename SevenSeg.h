@@ -126,7 +126,7 @@ class SevenSeg
 
     void updDelay();
     void execDelay(int);	// Executes delay in microseconds
-    char iaExtractDigit(long int,int);
+    char iaExtractDigit(long int,int,int);
     long int iaLimitInt(long int);
 
     // Sets which values (HIGH or LOW) pins should have to turn on/off segments or digits.
