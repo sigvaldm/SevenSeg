@@ -290,7 +290,7 @@ void SevenSeg::setRefreshRate(int freq){
  *     digit_0 = num / (10^(_numOfDigits-1))			// 2
  *     digit_1 = (num / (10^(_numOfDigits-2)))%10		// 4
  *     i_th_digit = (num / (10^(_numOfDigits-1-i)))%10		// 6 and 8 for i=2 and 3
- * 
+ *
  *     IMPROVED:
  *     num = 2468						// exampmle
  *     digit_0 = num % 10;
@@ -784,9 +784,9 @@ void SevenSeg::interruptAction(){
         }
         i++;
         j++;
-      }      
+      }
       writeDigit(_writeStr[i]);
-      if(_writeStr[i+1]=='.') setDP();     
+      if(_writeStr[i+1]=='.') setDP();
 
     }
 
@@ -802,9 +802,9 @@ void SevenSeg::interruptAction(){
         }
         i++;
         j++;
-      }      
+      }
       writeDigit(_writeStrObj[i]);
-      if(_writeStrObj[i+1]=='.') setDP();     
+      if(_writeStrObj[i+1]=='.') setDP();
 
     }
 
@@ -860,7 +860,7 @@ void SevenSeg::setDigitPins(int numOfDigits, int *pDigitPins){
 }
 */
 void SevenSeg::changeDigit(int digit){
-  
+
 
   // Turn off all digits/segments first.
   // If you swith on a new digit before turning off the segments you will get
@@ -881,7 +881,7 @@ void SevenSeg::changeDigit(char digit){
     digitalWrite(_aposSegPin, _aposState);
   }
 
-  if(digit=' '){
+  if(digit==' '){
     clearDisp();
   }
 
@@ -925,7 +925,7 @@ I've decided to treat the symbols in the following way
 
     Colon may be split in two parts UC (upper colon) and LC (lower colon) or colon may be hardwired as one LED
 
-    1. Colon has its own cathodes and anodes. Ground the cathode if common cathode or tie anode to supply in case of common anode. 
+    1. Colon has its own cathodes and anodes. Ground the cathode if common cathode or tie anode to supply in case of common anode.
        Syntax: setColonPin(segPin) where segPin is the other pin. In this case the colon needs not be multiplexed. If split segment pin
        for UC/LC, the user joins them together. setColon()/clearColon() writes directly to segmentPin.
     2. UC/LC is joined together using its own segment pin, and shares common anode/cathode with one of the digits.
@@ -1005,7 +1005,7 @@ void SevenSeg::setSymbPins(int digPin, int segUCPin, int segLCPin, int segAPin){
 /*
 The functions for setColon(), clearColon(), setApos(), clearApos() directly sets or clears the
 segment pins if no symbol pin is assigned. Since no symbol pin is assigned colon (apos isn't set) has
-a separate segment pin "Colon" and shares a digit pin with one or two other digits 
+a separate segment pin "Colon" and shares a digit pin with one or two other digits
 (in case it is split into UC and LC). In this case it makes sense to control it just like other
 segments; by setting and clearing the segment pin with setColon() or clearColon() after the correct
 digit is selected with changeDigit(). Compare with setDP()/clearDP(). Furthermore, it is not necessary
@@ -1058,7 +1058,7 @@ void SevenSeg::clearApos(){
 }
 
 void SevenSeg::writeDigit(int digit){
-  
+
   // Turn off all LEDs first to avoid running current through too many LEDs at once.
   digitalWrite(_A, _segOff);
   digitalWrite(_B, _segOff);
@@ -1067,12 +1067,12 @@ void SevenSeg::writeDigit(int digit){
   digitalWrite(_E, _segOff);
   digitalWrite(_F, _segOff);
   digitalWrite(_G, _segOff);
-  
+
   if(digit==1){
     digitalWrite(_B, _segOn);
     digitalWrite(_C, _segOn);
   }
-  
+
   if(digit==2){
     digitalWrite(_A, _segOn);
     digitalWrite(_B, _segOn);
@@ -1080,7 +1080,7 @@ void SevenSeg::writeDigit(int digit){
     digitalWrite(_E, _segOn);
     digitalWrite(_D, _segOn);
   }
-  
+
   if(digit==3){
     digitalWrite(_A, _segOn);
     digitalWrite(_B, _segOn);
@@ -1088,14 +1088,14 @@ void SevenSeg::writeDigit(int digit){
     digitalWrite(_C, _segOn);
     digitalWrite(_D, _segOn);
   }
-  
+
   if(digit==4){
     digitalWrite(_F, _segOn);
     digitalWrite(_G, _segOn);
     digitalWrite(_B, _segOn);
     digitalWrite(_C, _segOn);
   }
-  
+
   if(digit==5){
     digitalWrite(_A, _segOn);
     digitalWrite(_F, _segOn);
@@ -1103,7 +1103,7 @@ void SevenSeg::writeDigit(int digit){
     digitalWrite(_C, _segOn);
     digitalWrite(_D, _segOn);
   }
-  
+
   if(digit==6){
     digitalWrite(_A, _segOn);
     digitalWrite(_F, _segOn);
@@ -1112,13 +1112,13 @@ void SevenSeg::writeDigit(int digit){
     digitalWrite(_C, _segOn);
     digitalWrite(_G, _segOn);
   }
-  
+
   if(digit==7){
     digitalWrite(_A, _segOn);
     digitalWrite(_B, _segOn);
     digitalWrite(_C, _segOn);
   }
- 
+
   if(digit==8){
     digitalWrite(_A, _segOn);
     digitalWrite(_B, _segOn);
@@ -1128,7 +1128,7 @@ void SevenSeg::writeDigit(int digit){
     digitalWrite(_F, _segOn);
     digitalWrite(_G, _segOn);
   }
-  
+
   if(digit==9){
     digitalWrite(_G, _segOn);
     digitalWrite(_F, _segOn);
@@ -1137,7 +1137,7 @@ void SevenSeg::writeDigit(int digit){
     digitalWrite(_C, _segOn);
     digitalWrite(_D, _segOn);
   }
-  
+
   if(digit==0){
     digitalWrite(_A, _segOn);
     digitalWrite(_B, _segOn);
@@ -1146,7 +1146,7 @@ void SevenSeg::writeDigit(int digit){
     digitalWrite(_E, _segOn);
     digitalWrite(_F, _segOn);
   }
-  
+
 }
 
 void SevenSeg::writeDigit(char digit){
@@ -1382,7 +1382,7 @@ void SevenSeg::execDelay(int usec){
   if(usec!=0){	// delay() and delayMicroseconds() don't handle 0 delay
 
     if(usec<=16383)	delayMicroseconds(usec);	// maximum value for delayMicroseconds();
-    else		delay(usec/1000);	  
+    else		delay(usec/1000);
 
   }
 
