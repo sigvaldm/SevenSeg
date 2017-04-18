@@ -656,7 +656,7 @@ void SevenSeg::updDelay(){
     _timerCounterOffEnd=(_digitOffDelay/16)-1;
     if(_digitOnDelay==0) _timerCounterOnEnd=0;
     if(_digitOffDelay==0) _timerCounterOffEnd=0;
-    _timerCounter=0;
+//    _timerCounter=0;
     sei();
   }
 }
