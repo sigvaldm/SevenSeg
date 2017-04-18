@@ -66,98 +66,6 @@ SevenSeg::SevenSeg(int A,int B,int C,int D,int E,int F,int G){
   clearDisp();
 }
 
-void SevenSeg::setTimer(int timerID){
-
-/*
-  Assigns timer0, timer1 or timer2 solely to the task of multiplexing the display (depending on
-  the value of timerNumber).
-
-  For an example of a 5 digit display with 100Hz refresh rate and able to resolve duty cycle in
-  10%-steps a timing of the following resolution is needed:
-
-    1/( 100Hz * 5 digits * 0.1 ) = 200us
-
-  It is sufficient, but the brightness should be adjustable to more than 10 values. Hence a
-  resolution of 16us is selected by setting the prescaler to 64 and the compare register to 3:
-
-    interrupt delay = (64*(3+1))/16MHz = 16us
-
-  The timerCounter variable is of type unsigned int having a maximum value of 65535. Incrementing
-  this at each interrupt and taking action upon timerCounterOnEnd or timerCounterOffEnd yields
-  a maximum delay for something to happen:
-
-    max delay for something to happen = 16us * (65535+1) = 1.04s
-
-  which should be more than sufficient if you want to be able to look at your display.
-*/
-
-  _timerID = timerID;
-
-}
-
-void SevenSeg::clearTimer(){
-
-  stopTimer();
-  _timerID = -1;
-
-}
-
-void SevenSeg::startTimer(){
-
-  cli();  // Temporarily stop interrupts
-
-  // See registers in ATmega328 datasheet
-
-  if(_timerID==0){
-    TCCR0A = 0;
-    TCCR0B = 0;
-    TCNT0 = 0;					// Initialize counter value to 0
-    OCR0A = 3;					// Set Compare Match Register to 3
-    TCCR0A |= (1<<WGM01);			// Turn on CTC mode
-    TCCR0B |= (1<<CS01) | (1<<CS00);		// Set prescaler to 64
-    TIMSK0 |= (1<<OCIE0A);			// Enable timer compare interrupt
-  }
-
-  if(_timerID==1){
-    TCCR1A = 0;
-    TCCR1B = 0;
-    TCNT1  = 0;					// Initialize counter value to 0
-    OCR1A = 3;					// Set compare Match Register to 3
-    TCCR1B |= (1 << WGM12);			// Turn on CTC mode
-    TCCR1B |= (1 << CS11) | (1 << CS10);	// Set prescaler to 64
-    TIMSK1 |= (1 << OCIE1A);			// Enable timer compare interrupt
-  }
-
-  if(_timerID==2){
-    TCCR2A = 0;
-    TCCR2B = 0;
-    TCNT2  = 0;					// Initialize counter value to 0
-    OCR2A = 3;					// Set Compare Match Register to 3
-    TCCR2A |= (1 << WGM21);			// Turn on CTC mode
-    TCCR2B |= (1 << CS22);			// Set prescaler to 64
-    TIMSK2 |= (1 << OCIE2A);			// Enable timer compare interrupt
-  }
-
-  sei();  // Continue allowing interrupts
-
-  // update delays to get reasonable values to _timerCounterOn/OffEnd.
-  updDelay();
-  _timerCounter=0;
-
-}
-
-void SevenSeg::stopTimer(){
-  if(_timerID==0){
-    TCCR0B = 0;
-  }
-  if(_timerID==1){
-    TCCR1B = 0;
-  }
-  if(_timerID==2){
-    TCCR2B = 0;
-  }
-}
-
 void SevenSeg::setCommonAnode(){
   _digOn=HIGH;
   _digOff=LOW;
@@ -1293,3 +1201,109 @@ void SevenSeg::execDelay(int usec){
   }
 
 }
+/*
+ * INTERRUPT TIMER FUNCTIONS (PLATFORM DEPENDENT)
+ */
+
+#if defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) ||defined(__AVR_ATmega328P__)
+
+void SevenSeg::setTimer(int timerID){
+
+/*
+  Assigns timer0, timer1 or timer2 solely to the task of multiplexing the display (depending on
+  the value of timerNumber).
+
+  For an example of a 5 digit display with 100Hz refresh rate and able to resolve duty cycle in
+  10%-steps a timing of the following resolution is needed:
+
+    1/( 100Hz * 5 digits * 0.1 ) = 200us
+
+  It is sufficient, but the brightness should be adjustable to more than 10 values. Hence a
+  resolution of 16us is selected by setting the prescaler to 64 and the compare register to 3:
+
+    interrupt delay = (64*(3+1))/16MHz = 16us
+
+  The timerCounter variable is of type unsigned int having a maximum value of 65535. Incrementing
+  this at each interrupt and taking action upon timerCounterOnEnd or timerCounterOffEnd yields
+  a maximum delay for something to happen:
+
+    max delay for something to happen = 16us * (65535+1) = 1.04s
+
+  which should be more than sufficient if you want to be able to look at your display.
+*/
+
+  _timerID = timerID;
+
+}
+
+void SevenSeg::clearTimer(){
+
+  stopTimer();
+  _timerID = -1;
+
+}
+
+void SevenSeg::startTimer(){
+
+  cli();  // Temporarily stop interrupts
+
+  // See registers in ATmega328 datasheet
+
+  if(_timerID==0){
+    TCCR0A = 0;
+    TCCR0B = 0;
+    TCNT0 = 0;					// Initialize counter value to 0
+    OCR0A = 3;					// Set Compare Match Register to 3
+    TCCR0A |= (1<<WGM01);			// Turn on CTC mode
+    TCCR0B |= (1<<CS01) | (1<<CS00);		// Set prescaler to 64
+    TIMSK0 |= (1<<OCIE0A);			// Enable timer compare interrupt
+  }
+
+  if(_timerID==1){
+    TCCR1A = 0;
+    TCCR1B = 0;
+    TCNT1  = 0;					// Initialize counter value to 0
+    OCR1A = 3;					// Set compare Match Register to 3
+    TCCR1B |= (1 << WGM12);			// Turn on CTC mode
+    TCCR1B |= (1 << CS11) | (1 << CS10);	// Set prescaler to 64
+    TIMSK1 |= (1 << OCIE1A);			// Enable timer compare interrupt
+  }
+
+  if(_timerID==2){
+    TCCR2A = 0;
+    TCCR2B = 0;
+    TCNT2  = 0;					// Initialize counter value to 0
+    OCR2A = 3;					// Set Compare Match Register to 3
+    TCCR2A |= (1 << WGM21);			// Turn on CTC mode
+    TCCR2B |= (1 << CS22);			// Set prescaler to 64
+    TIMSK2 |= (1 << OCIE2A);			// Enable timer compare interrupt
+  }
+
+  sei();  // Continue allowing interrupts
+
+  // update delays to get reasonable values to _timerCounterOn/OffEnd.
+  updDelay();
+  _timerCounter=0;
+
+}
+
+void SevenSeg::stopTimer(){
+  if(_timerID==0){
+    TCCR0B = 0;
+  }
+  if(_timerID==1){
+    TCCR1B = 0;
+  }
+  if(_timerID==2){
+    TCCR2B = 0;
+  }
+}
+
+#else
+
+void SevenSeg::setTimer(int timerID){}
+void SevenSeg::clearTimer(){}
+void SevenSeg::startTimer(){}
+void SevenSeg::stopTimer(){}
+
+#endif
