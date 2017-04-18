@@ -1,8 +1,24 @@
 /*
-  SevenSeg 1.3
-  SevenSeg.h - Library for controlling a 7-segment display
-  Created by Sigvald Marholm, 02.06.2015.
+  SevenSeg 1.2.1
+  SevenSeg.cpp - Library for controlling a 7-segment LCD
+  Copyright 2013, 2015, 2017 Sigvald Marholm <marholm@marebakken.com>
+
+  This file is part of SevenSeg.
+
+  SevenSeg is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  SevenSeg is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with SevenSeg.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 
 #include "Arduino.h"
 #include "SevenSeg.h"
