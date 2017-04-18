@@ -1,5 +1,5 @@
 /*
-  SevenSeg v1.1
+  SevenSeg 1.3
   SevenSeg.h - Library for controlling a 7-segment LCD
   Created by Sigvald Marholm, 02.06.2015.
 */

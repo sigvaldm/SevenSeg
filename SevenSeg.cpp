@@ -1,5 +1,5 @@
 /*
-  SevenSeg v.1.0
+  SevenSeg 1.3
   SevenSeg.h - Library for controlling a 7-segment display
   Created by Sigvald Marholm, 02.06.2015.
 */
@@ -59,7 +59,6 @@ SevenSeg::SevenSeg(int A,int B,int C,int D,int E,int F,int G){
 
   _writeInt=0;
   _writePoint=0;
-//  _writeFloat=0;
   _writeStr=0;
   _writeMode=' ';
 
@@ -269,7 +268,7 @@ void SevenSeg::setRefreshRate(int freq){
  * char _writeMode	- Describes which writing function/mode is used:
  *				i - write(int)
  *				f - write(float)
- *				p - writeFixed()
+ *				p - write()
  *				s - write(char* a)
  *				o - write(String)
  *				: - writeClock() with colon as decimator
@@ -484,16 +483,6 @@ char SevenSeg::iaExtractDigit(long int number, int digit, int point){
     else return ' ';
   }
 
-//  else if(iaExtractDigit(old_number,digit+1,point)=='-' && minus) return '-';
-//  else if(iaExtractDigit(old_number,digit+1,point)!=' ' && iaExtractDigit(old_number,digit+1,point)!='-' && minus) return '-';
-//  else ' ';
-/*
-  else if(iaExtractDigit(number,digit+1,point)=='0'){
-    if(minus) return '-';
-    else return ' ';
-  } else return ' ';
-  */
-
 }
 
 // Limits integer similar to how it's done in write(int,int)
@@ -532,36 +521,7 @@ void SevenSeg::write(long int num){
   }
 
 }
-/*
-void SevenSeg::writeDisplay(int A,int B,int C,int D,int colon){
 
-  // Rewrite. Take caution to properly shut down all symbols for the duty cycle control.
-  // This can be done by turning off the digit rather than the symbol, but that does not
-  // work for symbols not connected to any digit (i.e. hardwired). Hence it should happen
-  // at a segment level.x
-
-  int digits[4];
-  digits[0]=A;
-  digits[1]=B;
-  digits[2]=C;
-  digits[3]=D;
-  for(int i=0;i<_numOfDigits;i++){
-
-    if(_digitOnDelay!=0){		// delayMicroseconds(0) yields a large delay for some reason. Hence the if-sentence.
-      changeDigit(i);
-      writeDigit(digits[i]);
-      //if(colon) setColon();
-      delayMicroseconds(_digitOnDelay);	// TBD: change to execDelay()
-    }
-    if(_digitOffDelay!=0){		// delayMicroseconds(0) yields a large delay for some reason. Hence the if-sentence.
-      changeDigit(' ');
-      //writeDigit(' ');
-      //clearColon();
-      delayMicroseconds(_digitOffDelay);// TBD: change to execDelay()
-    }
-  }
-}
-*/
 void SevenSeg::write(char *str){
 
   if(_timerID==-1){  // No timer assigned. MUX once.
@@ -634,58 +594,48 @@ void SevenSeg::write(double num, int point){
 
 void SevenSeg::write(double num){
 
-    // Compute the maximum positive and negative numbers possible to display
-    // (TBD: Move this to a computation done on pin assignments?)
-    long int maxNegNum=1;
-    for(int i=1;i<=_numOfDigits-1;i++) maxNegNum*=10;
-    long int maxPosNum=10*maxNegNum-1;
-    maxNegNum=-maxNegNum+1;
+    long int intNum;
+    int point = 0;
 
-    if(num>maxPosNum) num=maxPosNum;
-    if(num<maxNegNum) num=maxNegNum;
+    if(num>-1 && num<1){
 
-    int point=0;
-    if(num<0&&num>-1){
-      while(num*100<=maxPosNum && num*100>=maxNegNum && point<_numOfDigits-2){
-        num*=10;
-        point++;
-      }
-      if((int)num==0){
-        point++; // The minus sign will disappear
-      }
-    } else if(num>0&&num<1){
-      while(num*100<=maxPosNum && num*100>=maxNegNum && point<_numOfDigits-1){
-        num*=10;
-        point++;
-      }
+        for(point = 0; point<_numOfDigits-1; point++) num *= 10;
+
+        intNum = (long int)(num + 0.5 - (num<0));
+
+        if(intNum < 0){
+            num /= 10;
+            point--;
+            intNum = (long int)(num + 0.5 - (num<0));
+        }
+
     } else {
-      while(num*10<=maxPosNum && num*10>=maxNegNum){
-        num*=10;
-        point++;
-      }
-    }
 
-    // Implementing correct round-off
-    double rest=num;
-    if(rest<0) rest*=-1;
-    rest=rest-(long int)rest;
-    if(rest>=0.5&&num>0) num++;
-    if(rest>=0.5&&num<0) num--;
+        int digitsBeforeDecimal = 1;
+        for(long int i = (long int) num; i != 0; i /= 10) digitsBeforeDecimal++;
+
+        point = _numOfDigits - digitsBeforeDecimal - (num<0) + 1;
+        for(int d=0; d<point; d++) num *= 10;
+
+        intNum = (long int)(num + 0.5 - (num<0));
+
+    }
 
     if(_timerID==-1){
 
-      write((long int)num,point);
+        write(intNum,point);
 
     } else { // user timer
 
-      // Adapting to another format
-      point=point+1-_numOfDigits;
+        // Adapting to another format
+        point=point+1-_numOfDigits;
 
-      _writeMode='f';
-      _writePoint=-point;
-      _writeInt=(long int)num;
+        _writeMode='p';
+        _writePoint=-point;
+        _writeInt=(long int)num;
 
     }
+
 }
 
 void SevenSeg::updDelay(){
@@ -724,7 +674,7 @@ void SevenSeg::interruptAction(){
     writeDigit(' ');
 
     // If a write mode using . is used it is reasonable to assume that DP exists. Clear it (eventhough it might not be on this digit).
-    if(_writeMode=='p'||_writeMode=='.'||_writeMode=='s'||_writeMode=='f') clearDP();
+    if(_writeMode=='p'||_writeMode=='.'||_writeMode=='s') clearDP();
     if(_writeMode==':') clearColon();
 
   }
@@ -736,7 +686,6 @@ void SevenSeg::interruptAction(){
 
     _timerDigit++;
 
-    //if(_timerDigit>=_numOfDigits) _timerDigit=0;
     if(_timerDigit>=_numOfDigits){
       if(_symbDigPin!=-1 && _timerDigit==_numOfDigits){  // Symbol pin in use. Let _timerDigit=_numOfDigits be used for symbol mux.
       } else { // Finished muxing symbol digit, or symbol pin not in use
@@ -746,119 +695,74 @@ void SevenSeg::interruptAction(){
 
     if(_timerDigit==_numOfDigits) changeDigit('s');
     else changeDigit(_timerDigit);
-//    writeDigit(_timerDigit);
 
-    if(_writeMode=='p'||_writeMode=='f'){	// Fixed point writing (or float)
-      writeDigit(iaExtractDigit(_writeInt,_timerDigit,_writePoint));
-      if(_writePoint==_timerDigit) setDP();
-    }
+    if(_timerDigit!=_numOfDigits){
 
-    if(_writeMode=='i'){	// Fixed point writing
-      writeDigit(iaExtractDigit(_writeInt,_timerDigit,_numOfDigits));
-    }
-
-    if(_writeMode==':'||_writeMode=='.'||_writeMode=='_'){
-
-      // colon through symbpin? 1 if yes.
-      int symbColon = (_symbDigPin!=-1);
-
-      if(_timerDigit==_numOfDigits){	// Symbol digit
-        setColon();
-      } else {
-        writeDigit(iaExtractDigit(_writeInt,_timerDigit,_numOfDigits));
-        if(_writeMode==':' && !symbColon) setColon();
-        if((_writeMode=='.')&&(_timerDigit==_numOfDigits-3)) setDP();  // Only set "." in the right place
-      }
-
-    }
-
-    if(_writeMode=='s'){
-
-      // This algorithm must count to the correct letter i in _writeStr for digit j, since the two may be unmatched
-      // and it is impossible to know which letter to write without counting
-      int i=0; // which digit
-      int j=0; // which digit have it counted to
-      while(_writeStr[i]!='\0' && j<_timerDigit){
-        if(_writeStr[i+1]=='.'){
-          i++;
+        if(_writeMode=='p'){	// Fixed point writing (or float)
+          writeDigit(iaExtractDigit(_writeInt,_timerDigit,_writePoint));
+          if(_writePoint==_timerDigit && _writePoint!=_numOfDigits-1) setDP();
         }
-        i++;
-        j++;
-      }
-      writeDigit(_writeStr[i]);
-      if(_writeStr[i+1]=='.') setDP();
 
-    }
-
-    if(_writeMode=='o'){
-
-      // This algorithm must count to the correct letter i in _writeStr for digit j, since the two may be unmatched
-      // and it is impossible to know which letter to write without counting
-      int i=0; // which digit
-      int j=0; // which digit have it counted to
-      while(i<_writeStrObj.length() && j<_timerDigit){
-        if(_writeStrObj[i+1]=='.'){
-          i++;
+        if(_writeMode=='i'){	// Integer writing
+          writeDigit(iaExtractDigit(_writeInt,_timerDigit,_numOfDigits));
         }
-        i++;
-        j++;
-      }
-      writeDigit(_writeStrObj[i]);
-      if(_writeStrObj[i+1]=='.') setDP();
 
+        if(_writeMode==':'||_writeMode=='.'||_writeMode=='_'){
+
+          // colon through symbpin? 1 if yes.
+          int symbColon = (_symbDigPin!=-1);
+
+          if(_timerDigit==_numOfDigits){	// Symbol digit
+            setColon();
+          } else {
+            writeDigit(iaExtractDigit(_writeInt,_timerDigit,_numOfDigits));
+            if(_writeMode==':' && !symbColon) setColon();
+            if((_writeMode=='.')&&(_timerDigit==_numOfDigits-3)) setDP();  // Only set "." in the right place
+          }
+
+        }
+
+        if(_writeMode=='s'){
+
+          // This algorithm must count to the correct letter i in _writeStr for digit j, since the two may be unmatched
+          // and it is impossible to know which letter to write without counting
+          int i=0; // which digit
+          int j=0; // which digit have it counted to
+          while(_writeStr[i]!='\0' && j<_timerDigit){
+            if(_writeStr[i+1]=='.'){
+              i++;
+            }
+            i++;
+            j++;
+          }
+          writeDigit(_writeStr[i]);
+          if(_writeStr[i+1]=='.') setDP();
+
+        }
+
+        if(_writeMode=='o'){
+
+          // This algorithm must count to the correct letter i in _writeStr for digit j, since the two may be unmatched
+          // and it is impossible to know which letter to write without counting
+          int i=0; // which digit
+          int j=0; // which digit have it counted to
+          while(i<_writeStrObj.length() && j<_timerDigit){
+            if(_writeStrObj[i+1]=='.'){
+              i++;
+            }
+            i++;
+            j++;
+          }
+          writeDigit(_writeStrObj[i]);
+          if(_writeStrObj[i+1]=='.') setDP();
+
+        }
     }
 
-  }
-
-
-/*
-  // If we're in the on-part of the cycle and has counted as many interrupts corresponding to one on-phase
-  if((_timerCounter>=_timerCounterOnEnd) && (_timerPhase==1)){
-    _timerCounter=0;	// Reset the library's counter
-    _timerPhase=0;      // Switch to off-phase
-
-    // Turn off this digit
-    writeDigit(' ');
-
-  }
-
-  // Similar for the off-phase.
-  if((_timerCounter>=_timerCounterOffEnd) && (_timerPhase==0)){
-    _timerCounter=0;
-    _timerPhase=1;
-
-    // Turn on the next digit
-    _timerDigit++;
-    if(_timerDigit>=_numOfDigits){
-      _timerDigit=0;
-    }
-    changeDigit(_timerDigit);
-    writeDigit(_timerDigit);
-
-  }
-*/
-}
-
-/*
-void SevenSeg::setDigitPins(int numOfDigits, int *pDigitPins){
-
-  if(_numOfDigits>0){
-//    delete [] _dig;
-    free(_dig);
-  }
-
-  _numOfDigits = numOfDigits;
-
-//  _dig = new int[numOfDigits];
-  _dig = (int*)malloc(_numOfDigits * sizeof(int));
-
-//  memcpy(_dig, pDigitPins, numOfDigits);
-  for(int i=0;i<_numOfDigits;i++){
-    _dig[i]=pDigitPins[i];
   }
 
 }
-*/
+
 void SevenSeg::changeDigit(int digit){
 
 
@@ -993,6 +897,8 @@ void SevenSeg::setSymbPins(int digPin, int segUCPin, int segLCPin, int segAPin){
   _colonSegLPin=segLCPin;
   _aposSegPin=segAPin;
   _symbDigPin=digPin;
+  _aposState=_segOff;
+  _colonState=_segOff;
   pinMode(_colonSegPin,OUTPUT);
   pinMode(_colonSegLPin,OUTPUT);
   pinMode(_aposSegPin,OUTPUT);
