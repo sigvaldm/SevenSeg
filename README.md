@@ -3,7 +3,7 @@
 
 A sample code for a four-digit common anode display is shown below:
 
-`
+```arduino
 #include <SevenSeg.h>
 
 SevenSeg disp(11,7,3,5,6,10,2);
@@ -22,7 +22,7 @@ void loop() {
     disp.write(13.28);
 
 }
-`
+```
 
 Key functionality includes:
 
